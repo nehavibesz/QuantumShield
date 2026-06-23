@@ -188,23 +188,19 @@ LOGIN_TEMPLATE = """
             font-weight: 700;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 0.95rem;
-            margin-top: 10px;
+            font-family: inherit;
+            transition: background 0.3s;
         }
         .btn:hover {
-            background: #f9a8d4;
+            background: #f9c1d8;
         }
-        .error-banner {
+        .error-msg {
             background: #fee2e2;
-            border: 1px solid #fca5a5;
             color: #991b1b;
-            padding: 12px;
+            padding: 10px;
             border-radius: 4px;
-            font-size: 0.85rem;
             margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -213,32 +209,25 @@ LOGIN_TEMPLATE = """
         <div class="brand-header">
             <i class="fa-solid fa-shield-halved"></i>
             <h1>QuantumShield</h1>
-            <p>Vault Infrastructure Access Control</p>
+            <p>Quantum-Resistant Encryption</p>
         </div>
-
-        {% if error %}
-        <div class="error-banner">
-            <i class="fa-solid fa-circle-exclamation"></i>
-            {{ error }}
-        </div>
-        {% endif %}
-
-        <form method="POST" action="{{ url_for('login_page') }}">
+        {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+        <form method="POST">
             <div class="form-group">
-                <label>Security Operator Identity</label>
+                <label for="username">Username</label>
                 <div class="input-wrapper">
-                    <i class="fa-solid fa-user-shield"></i>
-                    <input type="text" name="username" placeholder="Username" required autocomplete="off">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="username" name="username" required>
                 </div>
             </div>
             <div class="form-group">
-                <label>Cryptographic Passphrase</label>
+                <label for="password">Password</label>
                 <div class="input-wrapper">
-                    <i class="fa-solid fa-key"></i>
-                    <input type="password" name="password" placeholder="Password" required>
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="password" name="password" required>
                 </div>
             </div>
-            <button type="submit" class="btn">Authenticate Identity</button>
+            <button type="submit" class="btn">Sign In</button>
         </form>
     </div>
 </body>
@@ -251,521 +240,238 @@ DASHBOARD_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuantumShield // Secure Workspace</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <title>QuantumShield // Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --bg-flat: #ffffff;
+            --bg-secondary: #f8fafc;
             --bg-container: #fff1f2;
-            --bg-input: #ffffff;
+            --bg-card: #ffffff;
             --border-flat: #e2e8f0;
             --accent-color: #fbcfe8;
             --text-dark: #1e293b;
             --text-muted: #64748b;
         }
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-flat);
-            color: var(--text-dark);
+        * {
             margin: 0;
             padding: 0;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-        .sidebar {
-            width: 260px;
-            background-color: var(--bg-container);
-            border-right: 1px solid var(--border-flat);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 24px 16px;
             box-sizing: border-box;
-            flex-shrink: 0;
         }
-        .sidebar-brand {
-            font-weight: 700;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding-left: 12px;
-            margin-bottom: 40px;
-        }
-        .sidebar-brand i {
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-secondary);
             color: var(--text-dark);
         }
-        .nav-menu {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            flex-grow: 1;
-        }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 12px 16px;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.9rem;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .nav-item:hover, .nav-item.active {
-            color: var(--text-dark);
+        .header {
             background: var(--bg-flat);
-        }
-        .nav-item.active {
-            border-left: 3px solid var(--text-dark);
-            border-radius: 0 4px 4px 0;
-            padding-left: 13px;
-        }
-        .logout-btn {
-            margin-top: 20px;
-            color: #991b1b;
-            border: 1px solid #fca5a5;
-            background: #fee2e2;
-            text-decoration: none;
-            text-align: center;
-        }
-        .logout-btn:hover {
-            background: #fca5a5 !important;
-        }
-        .sidebar-footer {
-            background: var(--bg-flat);
-            border: 1px solid var(--border-flat);
-            padding: 12px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .workspace {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-        header {
-            background: var(--bg-container);
             border-bottom: 1px solid var(--border-flat);
-            padding: 16px 40px;
+            padding: 20px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .header-meta {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-        .badge {
-            background: var(--bg-flat);
-            border: 1px solid var(--border-flat);
-            color: var(--text-dark);
-            padding: 6px 14px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .badge-dot {
-            width: 7px;
-            height: 7px;
-            background-color: var(--text-dark);
-            border-radius: 50%;
-        }
-        .user-panel {
+        .header-title {
             display: flex;
             align-items: center;
             gap: 12px;
-            font-size: 0.85rem;
         }
-        .avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--accent-color);
-            border: 1px solid var(--border-flat);
+        .header-title i {
+            font-size: 1.8rem;
         }
-        .content-body {
-            padding: 40px;
-            max-width: 1300px;
-            margin: 0 auto;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .page-title h1 {
-            margin: 0 0 6px 0;
-            font-size: 1.75rem;
+        .header-title h1 {
+            font-size: 1.4rem;
             font-weight: 700;
         }
-        .page-title p {
-            margin: 0 0 32px 0;
-            color: var(--text-muted);
+        .logout-btn {
+            background: var(--accent-color);
+            border: 1px solid var(--border-flat);
+            padding: 10px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 600;
             font-size: 0.9rem;
+            transition: background 0.3s;
         }
-        .metrics-grid {
+        .logout-btn:hover {
+            background: #f9c1d8;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: 1fr 1fr;
             gap: 20px;
             margin-bottom: 30px;
         }
-        @media (max-width: 1024px) {
-            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-        .metric-card {
-            background: var(--bg-container);
-            border: 1px solid var(--border-flat);
-            border-radius: 8px;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-        .metric-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--bg-flat);
-            border: 1px solid var(--border-flat);
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-dark);
-        }
-        .metric-data h3 {
-            margin: 0 0 4px 0;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .metric-data .value {
-            font-size: 1.6rem;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-        .trend-label {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-        .app-page {
-            display: none;
-        }
-        .app-page.active-page {
-            display: block;
-        }
-        .focused-op-box {
-            background: var(--bg-container);
-            border: 1px solid var(--border-flat);
-            border-radius: 8px;
-            padding: 30px;
-            max-width: 750px;
-        }
-        .op-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-        .op-header i { font-size: 1.3rem; color: var(--text-dark); }
-        .op-header h2 { margin: 0; font-size: 1.2rem; font-weight: 600; }
-        textarea, input[type="text"] {
-            width: 100%;
-            background: var(--bg-input);
-            border: 1px solid var(--border-flat);
-            border-radius: 4px;
-            padding: 14px;
-            color: var(--text-dark);
-            font-family: inherit;
-            box-sizing: border-box;
-            resize: none;
-            font-size: 0.95rem;
-        }
-        textarea:focus, input[type="text"]:focus {
-            outline: none;
-            border-color: var(--text-dark);
-        }
-        .btn {
-            width: 100%;
-            background: var(--accent-color);
-            color: var(--text-dark);
-            border: 1px solid var(--border-flat);
-            padding: 14px;
-            font-weight: 700;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 16px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.95rem;
-        }
-        .btn:hover {
-            background: #f9a8d4;
-        }
-        .btn-secondary {
-            background: transparent;
-            color: var(--text-dark);
-            border: 1px solid var(--text-dark);
-        }
-        .btn-secondary:hover {
-            background: var(--accent-color);
-        }
-        .crypto-output {
-            margin-top: 24px;
-            padding: 16px;
-            background: var(--bg-input);
-            border: 1px dashed var(--border-flat);
-            border-radius: 4px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            word-break: break-all;
-            color: var(--text-dark);
-            line-height: 1.6;
-        }
-        .monitoring-grid {
-            display: grid;
-            grid-template-columns: 1.6fr 1fr;
-            gap: 25px;
-        }
-        @media (max-width: 900px) {
-            .monitoring-grid { grid-template-columns: 1fr; }
-        }
-        .op-box {
-            background: var(--bg-container);
+        .card {
+            background: var(--bg-card);
             border: 1px solid var(--border-flat);
             border-radius: 8px;
             padding: 24px;
         }
-        .activity-table {
+        .card h2 {
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+        }
+        .card-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .stat-box {
+            background: var(--bg-container);
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        textarea, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-flat);
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .btn {
+            background: var(--accent-color);
+            border: 1px solid var(--border-flat);
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #f9c1d8;
+        }
+        .output {
+            background: var(--bg-container);
+            padding: 12px;
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-color);
+            margin-top: 16px;
+            display: none;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        table {
             width: 100%;
             border-collapse: collapse;
         }
-        .activity-table th {
-            text-align: left;
+        th, td {
             padding: 12px;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            border-bottom: 1px solid var(--border-flat);
-            text-transform: uppercase;
-        }
-        .activity-table td {
-            padding: 14px 12px;
-            font-size: 0.85rem;
+            text-align: left;
             border-bottom: 1px solid var(--border-flat);
         }
-        .status-pill {
-            background: var(--bg-flat);
-            color: var(--text-dark);
-            border: 1px solid var(--border-flat);
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
+        th {
+            background: var(--bg-container);
             font-weight: 600;
         }
-        .radar-box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 30px;
+        .status-pill {
+            background: #dcfce7;
+            color: #166534;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
         }
-        .circle-radar {
-            width: 130px;
-            height: 130px;
-            border-radius: 50%;
-            border: 2px solid var(--border-flat);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            margin-bottom: 15px;
-            background: var(--bg-flat);
-        }
-        .circle-radar .percentage {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-dark);
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .header {
+                flex-direction: column;
+                gap: 12px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <div>
-            <div class="sidebar-brand">
-                <i class="fa-solid fa-shield-halved"></i> QuantumShield
-            </div>
-            <div class="nav-menu">
-                <div class="nav-item active" onclick="switchPage('dashboard-page', this)"><i class="fa-solid fa-chart-pie"></i> Dashboard</div>
-                <div class="nav-item" onclick="switchPage('encrypt-page', this)"><i class="fa-solid fa-lock"></i> Encrypt Data</div>
-                <div class="nav-item" onclick="switchPage('decrypt-page', this)"><i class="fa-solid fa-lock-open"></i> Decrypt Data</div>
-                <a href="/logout" class="nav-item logout-btn"><i class="fa-solid fa-power-off"></i> Terminate Session</a>
-            </div>
+    <div class="header">
+        <div class="header-title">
+            <i class="fa-solid fa-shield-halved"></i>
+            <h1>QuantumShield</h1>
         </div>
-        <div class="sidebar-footer">
-            <i class="fa-solid fa-shield-cat" style="color:var(--text-dark)"></i>
-            <div>
-                <div style="font-weight: 600;">Multi-PQC Active</div>
-                <div style="color:var(--text-muted); font-size:0.7rem;">3 Cryptographic Systems</div>
-            </div>
-        </div>
+        <a href="/logout" class="logout-btn">Logout</a>
     </div>
 
-    <div class="workspace">
-        <header>
-            <div class="header-meta">
-                <div style="font-weight:600; font-size:0.9rem;">Quantum Hybrid Control Console</div>
-                <div class="badge"><div class="badge-dot"></div>HYBRID MODE (ML-KEM + HQC + AES)</div>
-            </div>
-            <div class="user-panel">
-                <div style="text-align: right">
-                    <div style="font-weight:600;">{{ session.get('username', 'Unknown') }}</div>
-                    <div style="color:var(--text-muted); font-size:0.7rem;">Operator Hub</div>
-                </div>
-                <div class="avatar"></div>
-            </div>
-        </header>
-
-        <div class="content-body">
-            <div id="dashboard-page" class="app-page active-page">
-                <div class="page-title">
-                    <h1>Dashboard</h1>
-                    <p>Multi-Algorithmic Layer Protection Active.</p>
-                </div>
-                <div class="metrics-grid">
-                    <div class="metric-card">
-                        <div class="metric-data">
-                            <h3>Encrypted Records</h3>
-                            <div class="value" id="encCount">1,248</div>
-                            <div class="trend-label">+12% this month</div>
-                        </div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-data">
-                            <h3>Decapsulated Records</h3>
-                            <div class="value" id="decCount">982</div>
-                            <div class="trend-label">+8% this month</div>
-                        </div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-data">
-                            <h3>Active Pipeline Channels</h3>
-                            <div class="value">3</div>
-                            <div class="trend-label">Algorithmic Diversity</div>
-                        </div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-data">
-                            <h3>Security Status</h3>
-                            <div class="value" style="color:var(--text-dark); font-size:1.3rem; margin-top:6px;">Tri-Protected</div>
-                            <div class="trend-label">All layers intact</div>
-                        </div>
-                        <div class="metric-icon"><i class="fa-solid fa-user-shield"></i></div>
-                    </div>
-                </div>
-
-                <div class="monitoring-grid">
-                    <div class="op-box">
-                        <div class="op-header"><h2>Recent Activity</h2></div>
-                        <table class="activity-table">
-                            <thead>
-                                <tr><th>Operation</th><th>Target Record</th><th>Time</th><th>Status</th></tr>
-                            </thead>
-                            <tbody id="activityBody">
-                                <tr><td><i class="fa-solid fa-shield" style="color:var(--text-dark)"></i> Multi-Hybrid Encryption Run</td><td>record_1248</td><td>2 minutes ago</td><td><span class="status-pill">Success</span></td></tr>
-                                <tr><td><i class="fa-solid fa-unlock" style="color:var(--text-dark)"></i> Tri-Vector Decapsulation</td><td>record_1247</td><td>5 minutes ago</td><td><span class="status-pill">Success</span></td></tr>
-                                <tr><td><i class="fa-solid fa-arrows-rotate" style="color:var(--text-muted)"></i> Schemes Synced</td><td>ML-KEM + HQC</td><td>1 hour ago</td><td><span class="status-pill">Info</span></td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="op-box radar-box">
-                        <div class="op-header" style="align-self: flex-start;"><h2>Security Overview</h2></div>
-                        <div class="circle-radar">
-                            <div class="percentage">100%</div>
-                            <div style="font-size:0.65rem; color:var(--text-dark); font-weight:700;">SECURE</div>
-                        </div>
-                        <div style="font-size: 0.85rem; text-align: center; color: var(--text-muted)">
-                            <div><i class="fa-solid fa-circle-check" style="color:var(--text-dark)"></i> Method 1: ML-KEM-768 (Lattice)</div>
-                            <div style="margin-top: 4px;"><i class="fa-solid fa-circle-check" style="color:var(--text-dark)"></i> Method 2: HQC-128 (Code)</div>
-                            <div style="margin-top: 4px;"><i class="fa-solid fa-circle-check" style="color:var(--text-dark)"></i> Method 3: True AES-256-GCM</div>
-                        </div>
-                    </div>
-                </div>
+    <div class="container">
+        <div class="grid">
+            <!-- Encryption Card -->
+            <div class="card">
+                <h2><i class="fa-solid fa-lock"></i> Encrypt Data</h2>
+                <textarea id="secretData" placeholder="Enter data to encrypt..." rows="4"></textarea>
+                <button class="btn" onclick="runEncryption()">🔐 Encrypt</button>
+                <div id="encOutput" class="output"></div>
             </div>
 
-            <div id="encrypt-page" class="app-page">
-                <div class="page-title">
-                    <h1>Encrypt Data</h1>
-                    <p>Protect your custom assets using our multi-algorithmic post-quantum engine.</p>
-                </div>
-                <div class="focused-op-box">
-                    <div class="form-group">
-                        <label>Payload Data</label>
-                        <textarea id="secretData" rows="5" placeholder="Enter highly confidential strings, keys, or metrics..."></textarea>
-                    </div>
-                    <button class="btn" onclick="runEncryption()">
-                        <i class="fa-solid fa-lock"></i> Encrypt & Store (3-Method Pipeline)
-                    </button>
-                    <div id="encOutput" class="crypto-output" style="display:none;"></div>
-                </div>
+            <!-- Decryption Card -->
+            <div class="card">
+                <h2><i class="fa-solid fa-unlock"></i> Decrypt Data</h2>
+                <input type="text" id="recordId" placeholder="Enter record ID...">
+                <button class="btn" onclick="runDecryption()">🔓 Decrypt</button>
+                <div id="decOutput" class="output"></div>
             </div>
+        </div>
 
-            <div id="decrypt-page" class="app-page">
-                <div class="page-title">
-                    <h1>Decrypt Data</h1>
-                    <p>Decapsulate secure vault payloads by processing runtime asymmetric vectors through the hybrid mixer.</p>
+        <!-- Stats Card -->
+        <div class="card" style="grid-column: 1 / -1;">
+            <h2>System Metrics</h2>
+            <div class="card-stats">
+                <div class="stat-box">
+                    <div class="stat-number" id="encCount">1248</div>
+                    <div class="stat-label">Encrypted</div>
                 </div>
-                <div class="focused-op-box">
-                    <div class="form-group">
-                        <label>Target Record Identifier</label>
-                        <input type="text" id="recordId" placeholder="e.g., record_1249">
-                    </div>
-                    <button class="btn btn-secondary" onclick="runDecryption()">
-                        <i class="fa-solid fa-key"></i> Decrypt & Recover
-                    </button>
-                    <div id="decOutput" class="crypto-output" style="display:none;"></div>
+                <div class="stat-box">
+                    <div class="stat-number" id="decCount">982</div>
+                    <div class="stat-label">Decapsulated</div>
                 </div>
             </div>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="card" style="grid-column: 1 / -1; margin-top: 20px;">
+            <h2>Activity Log</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Operation</th>
+                        <th>Record ID</th>
+                        <th>Timestamp</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="activityBody">
+                    <tr>
+                        <td><i class="fa-solid fa-shield" style="color:var(--text-dark)"></i> System Initialized</td>
+                        <td>sys_init</td>
+                        <td>Boot</td>
+                        <td><span class="status-pill">Active</span></td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
     <script>
-        function switchPage(pageId, element) {
-            try {
-                var pages = document.querySelectorAll('.app-page');
-                for (var i = 0; i < pages.length; i++) {
-                    pages[i].classList.remove('active-page');
-                }
-                
-                var navItems = document.querySelectorAll('.nav-item');
-                for (var j = 0; j < navItems.length; j++) {
-                    navItems[j].classList.remove('active');
-                }
-                
-                var targetPage = document.getElementById(pageId);
-                if (targetPage) {
-                    targetPage.classList.add('active-page');
-                }
-                if (element) {
-                    element.classList.add('active');
-                }
-            } catch (err) {
-                console.error("Navigation routing exception: ", err);
-            }
-        }
-
         async function runEncryption() {
             try {
                 const inputEl = document.getElementById('secretData');
